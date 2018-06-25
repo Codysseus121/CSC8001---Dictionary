@@ -1,4 +1,4 @@
-import java.util.HashMap;
+import java.util.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Scanner;
@@ -6,13 +6,13 @@ import java.io.FileReader;
 import java.io.FileNotFoundException;
 import java.util.Map;
 import java.util.TreeMap;
+import java.io.*;
 
 /**
  * A class to take text input from a file and produce a list of words and their number of repetitions.
  * Taken from 'John Bentley: Programming Pearls', 15.1 and implemented in Java with two different methods.
- * Main method parses a text file, creates an ordered ArrayList of the words in the text file, and returns
- * a HashMap with the number of repetitions for each unique entry.
- * Second method simply counts, removes and prints the repetitions.
+ * Main method parses a text file and returns a file with the number of repetitions for each unique entry.
+ * Second method simply counts, removes and prints the repetitions to file.
  * @Dimitrios P. 
  * @21-11-2017
  */
@@ -20,20 +20,24 @@ public class Dictionary
 { 
     private ArrayList <String> dictionary;
     private Scanner inFile;
-    private HashMap <String,Integer> repetitions;
+    private Map <String,Integer> repetitions;
+    private static PrintWriter outFile;
+    private String [] textarray;
+    private List <Concordance> concordances = new ArrayList<Concordance>();
 
     public static void main(String[] args) throws FileNotFoundException
     {
+        outFile=new PrintWriter("/home/codysseus/Bible2.txt");
         Dictionary myDictionary=new Dictionary();
         myDictionary.parseText();
         myDictionary.countElements();
-        myDictionary.removeReps();
+
     }
 
     public Dictionary() 
     {
-        this.dictionary = new ArrayList<String>();
-        this.repetitions= new HashMap<String, Integer>();
+        dictionary = new ArrayList<String>();
+        repetitions= new TreeMap<String, Integer>();
 
     } 
 
@@ -42,19 +46,105 @@ public class Dictionary
      * Processes the text file and adds the results in a sorted ArrayList.
      *
      */
-    private void parseText () throws FileNotFoundException
+    public void parseText () throws FileNotFoundException
     { 
-        inFile = new Scanner (new FileReader("C:\\Users\\Mitsos\\Desktop\\Ovid.txt")).useDelimiter("[^a-zA-Z]*\\s+[^a-zA-Z]*");
+        inFile = new Scanner (new FileReader("C://users//Mitsos//Desktop//Revelation.txt")).useDelimiter("[^a-zA-Z]*\\s+[^a-zA-Z]*");
         while (inFile.hasNext()) 
             dictionary.add(inFile.next().toString().toLowerCase().replaceAll("[^a-zA-Z]","").trim());
         Collections.sort(dictionary);
     }
 
+    public void processText () throws FileNotFoundException
+    {
+        inFile = new Scanner (new FileReader("C://users//Mitsos//Desktop//Revelation.txt"));      
+
+        while (inFile.hasNext())
+            dictionary.add(inFile.next().trim());
+
+        int sentence = 1;
+        for (String s : dictionary)
+        {System.out.println(sentence + " "+ s);
+            sentence++;}
+
+    }
+
+    public void generateConcordance(int minlength) //Concordance object (KWIC, left context, right context, source file, paragraph)
+    {
+        String lcontext="";
+        String rcontext="";
+        String kwic="";
+        String paragraph="";
+        String word="";
+
+        for (int index=0 ; index<dictionary.size(); index++)
+        {
+            word=dictionary.get(index);
+            if (word.length()>=minlength)
+            {   kwic=word;
+                lcontext=getLeftContext(index, 5);
+                rcontext=getRightContext (index, 5);
+                paragraph=getParagraph(word, index, 25);
+                Concordance c= new Concordance(lcontext, kwic, rcontext, paragraph);
+                concordances.add(c);
+            }
+
+        }
+
+    }
+
+    private String getLeftContext(int index, int noofwords)
+    {
+        StringBuilder reversedcontext= new StringBuilder();
+
+        int count=0;
+        int i=index-1;
+        while (i>=0 && count<=noofwords)
+        {
+            reversedcontext.append(dictionary.get(i)).append(" ");
+            i--;
+            count++;
+        }
+        String [] arr = reversedcontext.toString().split(" ");
+
+        StringBuilder sb = new StringBuilder();
+        for (int j=arr.length-1 ; j>=0 ; j--)
+        {
+            sb.append(arr[j]).append(" ");
+            
+        }
+
+        return sb.toString().trim();
+    }
+
+    private String getRightContext(int index, int noofwords)
+    {
+        StringBuilder rightcontext= new StringBuilder();
+        int count=0;
+        int i=index+1;
+        while (i<dictionary.size() && count<=noofwords)
+        {
+            rightcontext.append(dictionary.get(i)).append(" ");
+            count++;
+            i++;
+        }
+        return rightcontext.toString().trim();
+
+    }
+
+    private String getParagraph (String word, int index, int noofwords)
+    {
+        String paragraphleft = getLeftContext(index, noofwords);
+        String paragraphright = getRightContext (index, noofwords);
+        String paragraph = paragraphleft + " " + word + paragraphright;
+        
+        return paragraph;
+    }
+
     /**
      * Method countElements
-     * Counts the number of word repetitions and outputs the result to a HashMap(word,repetitions)
+     * Counts the number of word repetitions and outputs the result to a file.
      */
-    private void countElements ()
+    public void countElements () 
     {
         String word=dictionary.get(0);
         int count=dictionary.size();
@@ -76,40 +166,12 @@ public class Dictionary
 
         }
 
+        for(Map.Entry<String, Integer> entry : repetitions.entrySet()) 
+            outFile.printf("%-20s : %d\n",entry.getKey(), entry.getValue());
+        outFile.close();
     }
 
-    /**
-     * Method removeReps
-     * Removes the repetitions and prints the final form of the dictionary to the screen.
-     */
-    private void removeReps()
-
-    {
-        int count=dictionary.size();
-        for (int i=0;i<count;i++)
-        { 
-            String word=dictionary.get(i);
-
-            for (int j=i+1;j<count;j++)
-            {
-
-                if (word.equals(dictionary.get(j)))
-                {
-
-                    dictionary.remove(j--);
-                    count--;
-
-                }
-            }
-        }
-
-        Map <String, Integer> entries = new TreeMap<String, Integer>(repetitions);
-        for(Map.Entry<String, Integer> entry : entries.entrySet()) 
-            System.out.printf("%-25s : %d\n",entry.getKey(), entry.getValue());
-
-    }
-
-    /** A second method to print word count. Does not return an object.
+    /** A second method to print word count to file.
      * 
      */
     public void countPrintRepetitions ()
@@ -147,12 +209,11 @@ public class Dictionary
                     break;
             }
 
-            System.out.println(word +" : "+repetitions);
+            outFile.printf("%-25s : %d\n", word, repetitions);            
             repetitions=1;
         }
-
+        outFile.close();
     }
 
 }
-
 
