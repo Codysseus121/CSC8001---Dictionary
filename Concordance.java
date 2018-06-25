@@ -25,5 +25,9 @@ public class Concordance
         
     }
 
+    public String toString()
+    {
+    return lcontext + " " + kwic + " " + rcontext;
     
+    }
 }

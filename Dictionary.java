@@ -27,10 +27,11 @@ public class Dictionary
 
     public static void main(String[] args) throws FileNotFoundException
     {
-        outFile=new PrintWriter("/home/codysseus/Bible2.txt");
+        outFile=new PrintWriter("C://users//Mitsos//Desktop//Revelationconc.txt");
         Dictionary myDictionary=new Dictionary();
-        myDictionary.parseText();
-        myDictionary.countElements();
+        myDictionary.processText();
+        myDictionary.generateConcordance(2);
+        for (String
 
     }
 
@@ -91,7 +92,7 @@ public class Dictionary
         }
 
     }
-
+    
     private String getLeftContext(int index, int noofwords)
     {
         StringBuilder reversedcontext= new StringBuilder();
