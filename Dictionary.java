@@ -31,8 +31,8 @@ public class Dictionary
         outFile=new PrintWriter("C://users//Mitsos//Desktop//Bibleconc.txt");
         Dictionary myDictionary=new Dictionary();
         myDictionary.tokenizeFile();
-        myDictionary.generateConcordance(3);
-        //myDictionary.printConc();
+        //myDictionary.generateConcordance(3);
+        myDictionary.getParagraph(68);
         long endTime   = System.nanoTime();
         long totalTime = endTime - startTime;
         System.out.println(totalTime);
@@ -102,7 +102,7 @@ public class Dictionary
             }
 
         }
-        //System.out.println(dictionary.size());
+        // System.out.println(dictionary.size());
         // int count=0;
         // for (String word : dictionary)
         // { System.out.println(word + " " + count);
@@ -119,7 +119,6 @@ public class Dictionary
         String word="";
         Concordance c=null;
         ConcDao dao= new ConcDao();
-        
 
         for (int index=0 ; index<dictionary.size(); index++)
         {
@@ -129,17 +128,47 @@ public class Dictionary
             {   kwic=word;
                 lcontext=getLeftContext(index, 7);//create array of strings
                 rcontext=getRightContext (index, 7);
-                paragraph=getParagraph(word, index, 30);
-                
-                c= new Concordance(lcontext, kwic, rcontext, paragraph);//instead of adding them to AL add to DB
+
+                c= new Concordance(lcontext, kwic, rcontext);//instead of adding them to AL add to DB
                 dao.insertCon(c);
-                
+
             }
 
         }
-        
+
     }
 
+    private void getParagraph(int paralength)//use 68 words for paralength
+    {
+
+        //ConcDao d = new ConcDao();
+
+        int index=0;
+        int nextindex=0;
+        int chunk = paralength;
+
+        while (index<dictionary.size())
+        {
+            StringBuilder sb = new StringBuilder();
+            String paragraph="";
+            if (dictionary.size()-chunk<paralength)
+            {
+                chunk=dictionary.size();
+            }
+
+            for (index=nextindex ; index <chunk ; index++)
+            {
+                sb.append(dictionary.get(index)).append(" ");
+            }
+            paragraph=sb.toString();
+            Paragraph p = new Paragraph(paragraph);
+            //d.insertPara(p);
+            nextindex=index;
+            chunk+=paralength;
+
+        }
+    }
+    
     private String getLeftContext(int index, int noofwords)
     {
         StringBuilder reversedcontext= new StringBuilder();
@@ -183,14 +212,14 @@ public class Dictionary
 
     }
 
-    private String getParagraph (String word, int index, int noofwords)
-    {
-        String paragraphleft = getLeftContext(index, noofwords);
-        String paragraphright = getRightContext (index, noofwords);
-        String paragraph = paragraphleft + " " + word + " " + paragraphright;
+    // private String getParagraph (String word, int index, int noofwords)
+    // {
+    // String paragraphleft = getLeftContext(index, noofwords);
+    // String paragraphright = getRightContext (index, noofwords);
+    // String paragraph = paragraphleft + " " + word + " " + paragraphright;
 
-        return paragraph;
-    }
+    // return paragraph;
+    // }
 
     public void printConc()
     {

@@ -44,8 +44,11 @@ public class ConcDao {
             statement.setString(1, con.getLContext());
             statement.setString(2, con.getKwic());
             statement.setString(3, con.getRContext());
-            statement.setString(4, con.getPara());
-            statement.execute();
+            
+            PreparedStatement statement2 = connection.prepareStatement("insert into PARAGRAPH (PARAGRAPH)"+"values(?)");
+            statement2.setString(1, con.getPara());
+           statement.execute();
+           statement2.execute();
             
         } catch (SQLException ex) {
             ex.printStackTrace();
