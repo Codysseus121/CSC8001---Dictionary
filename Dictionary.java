@@ -25,13 +25,17 @@ public class Dictionary
     private String [] textarray;
     private List <Concordance> concordances = new ArrayList<Concordance>();
 
-    public static void main(String[] args) throws FileNotFoundException
+    public static void main(String[] args) throws FileNotFoundException, IOException
     {
-        outFile=new PrintWriter("C://users//Mitsos//Desktop//Revelationconc.txt");
+        long startTime = System.nanoTime();
+        outFile=new PrintWriter("C://users//Mitsos//Desktop//Bibleconc.txt");
         Dictionary myDictionary=new Dictionary();
-        myDictionary.processText();
-        myDictionary.generateConcordance(2);
-        for (String
+        myDictionary.tokenizeFile();
+        myDictionary.generateConcordance(3);
+        //myDictionary.printConc();
+        long endTime   = System.nanoTime();
+        long totalTime = endTime - startTime;
+        System.out.println(totalTime);
 
     }
 
@@ -49,24 +53,61 @@ public class Dictionary
      */
     public void parseText () throws FileNotFoundException
     { 
-        inFile = new Scanner (new FileReader("C://users//Mitsos//Desktop//Revelation.txt")).useDelimiter("[^a-zA-Z]*\\s+[^a-zA-Z]*");
+        inFile = new Scanner (new FileReader("C://users//Mitsos//Desktop//King_James_Bible.txt")).useDelimiter("[^a-zA-Z]*\\s+[^a-zA-Z]*");
         while (inFile.hasNext()) 
             dictionary.add(inFile.next().toString().toLowerCase().replaceAll("[^a-zA-Z]","").trim());
         Collections.sort(dictionary);
+        System.out.println(dictionary.size());
+
+        // int count=0;
+        // for (String word : dictionary)
+        // { System.out.println(word + " " + count);
+        // count++;
+        // }
+
     }
 
     public void processText () throws FileNotFoundException
     {
-        inFile = new Scanner (new FileReader("C://users//Mitsos//Desktop//Revelation.txt"));      
+        inFile = new Scanner (new FileReader("C://users//Mitsos//Desktop//King_James_Bible.txt"));      
 
         while (inFile.hasNext())
-            dictionary.add(inFile.next().trim());
+            dictionary.add(inFile.next().replaceAll("\\n\\r\\t", "").trim());
+        System.out.println(dictionary.size());
 
-        int sentence = 1;
-        for (String s : dictionary)
-        {System.out.println(sentence + " "+ s);
-            sentence++;}
+        // int count=0;
+        // for (String word : dictionary)
+        // { System.out.println(word + " " + count);
+        // count++;
+        // }
 
+        // int sentence = 1;
+        // for (String s : dictionary)
+        // {System.out.println(sentence + " "+ s);
+        // sentence++;}
+
+    }
+
+    public void tokenizeFile() throws FileNotFoundException, IOException
+
+    {
+        FileReader freader = new FileReader("C://users//Mitsos//Desktop//Revelation.txt");
+        StreamTokenizer t = new StreamTokenizer(freader);
+
+        while (t.nextToken() != t.TT_EOF)
+        {
+            if (t.ttype == t.TT_WORD)
+            {
+                dictionary.add(t.sval);
+            }
+
+        }
+        //System.out.println(dictionary.size());
+        // int count=0;
+        // for (String word : dictionary)
+        // { System.out.println(word + " " + count);
+        // count++;
+        // }
     }
 
     public void generateConcordance(int minlength) //Concordance object (KWIC, left context, right context, source file, paragraph)
@@ -76,23 +117,29 @@ public class Dictionary
         String kwic="";
         String paragraph="";
         String word="";
+        Concordance c=null;
+        ConcDao dao= new ConcDao();
+        
 
         for (int index=0 ; index<dictionary.size(); index++)
         {
             word=dictionary.get(index);
+            //Concordance c = null;
             if (word.length()>=minlength)
             {   kwic=word;
-                lcontext=getLeftContext(index, 5);
-                rcontext=getRightContext (index, 5);
-                paragraph=getParagraph(word, index, 25);
-                Concordance c= new Concordance(lcontext, kwic, rcontext, paragraph);
-                concordances.add(c);
+                lcontext=getLeftContext(index, 7);//create array of strings
+                rcontext=getRightContext (index, 7);
+                paragraph=getParagraph(word, index, 30);
+                
+                c= new Concordance(lcontext, kwic, rcontext, paragraph);//instead of adding them to AL add to DB
+                dao.insertCon(c);
+                
             }
 
         }
-
+        
     }
-    
+
     private String getLeftContext(int index, int noofwords)
     {
         StringBuilder reversedcontext= new StringBuilder();
@@ -111,10 +158,12 @@ public class Dictionary
         for (int j=arr.length-1 ; j>=0 ; j--)
         {
             sb.append(arr[j]).append(" ");
-            
-        }
 
-        return sb.toString().trim();
+        }
+        String lc = sb.toString().trim();
+        reversedcontext.setLength(0);
+        sb.setLength(0);
+        return lc;
     }
 
     private String getRightContext(int index, int noofwords)
@@ -128,7 +177,9 @@ public class Dictionary
             count++;
             i++;
         }
-        return rightcontext.toString().trim();
+        String rc = rightcontext.toString().trim();
+        rightcontext.setLength(0);
+        return rc;
 
     }
 
@@ -136,9 +187,21 @@ public class Dictionary
     {
         String paragraphleft = getLeftContext(index, noofwords);
         String paragraphright = getRightContext (index, noofwords);
-        String paragraph = paragraphleft + " " + word + paragraphright;
-        
+        String paragraph = paragraphleft + " " + word + " " + paragraphright;
+
         return paragraph;
+    }
+
+    public void printConc()
+    {
+
+        Collections.sort(concordances);
+        for (Concordance c: concordances)
+        {
+            outFile.printf("%-35s %25s %35s\n", c.getLContext(), c.getKwic(), c.getRContext());
+        }
+
+        outFile.close();
     }
 
     /**
