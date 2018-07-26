@@ -24,15 +24,19 @@ public class Dictionary
     private static PrintWriter outFile;
     private String [] textarray;
     private List <Concordance> concordances = new ArrayList<Concordance>();
+    private List<String> paragraphs = new ArrayList<String>();
+    private List<String> kwics = new ArrayList<String>();
 
-    public static void main(String[] args) throws FileNotFoundException, IOException
+    public static void main(String[] args) throws FileNotFoundException, IOException, Exception
     {
         long startTime = System.nanoTime();
-        outFile=new PrintWriter("C://users//Mitsos//Desktop//Bibleconc.txt");
+        //outFile=new PrintWriter("C://users//Mitsos//Desktop//Bibleconc.txt");
         Dictionary myDictionary=new Dictionary();
-        myDictionary.tokenizeFile();
+        //myDictionary.tokenizeFile();
         //myDictionary.generateConcordance(3);
-        myDictionary.getParagraph(68);
+        //myDictionary.intoDB();
+        //myDictionary.getParagraph(68);
+        myDictionary.insertFile();
         long endTime   = System.nanoTime();
         long totalTime = endTime - startTime;
         System.out.println(totalTime);
@@ -45,7 +49,12 @@ public class Dictionary
         repetitions= new TreeMap<String, Integer>();
 
     } 
-
+    
+    
+    public void getPDF()
+    {
+    }
+    
     /**
      * Method parseText
      * Processes the text file and adds the results in a sorted ArrayList.
@@ -69,11 +78,11 @@ public class Dictionary
 
     public void processText () throws FileNotFoundException
     {
-        inFile = new Scanner (new FileReader("C://users//Mitsos//Desktop//King_James_Bible.txt"));      
+        inFile = new Scanner (new FileReader("C://users//Mitsos//Desktop//Timaeus.txt"));      
 
-        while (inFile.hasNext())
-            dictionary.add(inFile.next().replaceAll("\\n\\r\\t", "").trim());
-        System.out.println(dictionary.size());
+        while (inFile.hasNextLine())
+           kwics.add(inFile.nextLine().trim());
+        System.out.println(kwics.size());
 
         // int count=0;
         // for (String word : dictionary)
@@ -91,7 +100,7 @@ public class Dictionary
     public void tokenizeFile() throws FileNotFoundException, IOException
 
     {
-        FileReader freader = new FileReader("C://users//Mitsos//Desktop//Revelation.txt");
+        FileReader freader = new FileReader("C://users//Mitsos//Desktop//King_James_Bible.txt");
         StreamTokenizer t = new StreamTokenizer(freader);
 
         while (t.nextToken() != t.TT_EOF)
@@ -109,7 +118,14 @@ public class Dictionary
         // count++;
         // }
     }
-
+    
+    public void insertFile() throws Exception
+    {
+        ConcDao dao=new ConcDao();
+        dao.insertFile();
+        
+    }
+    
     public void generateConcordance(int minlength) //Concordance object (KWIC, left context, right context, source file, paragraph)
     {
         String lcontext="";
@@ -130,7 +146,7 @@ public class Dictionary
                 rcontext=getRightContext (index, 7);
 
                 c= new Concordance(lcontext, kwic, rcontext);//instead of adding them to AL add to DB
-                dao.insertCon(c);
+                concordances.add(c);
 
             }
 
@@ -141,16 +157,16 @@ public class Dictionary
     private void getParagraph(int paralength)//use 68 words for paralength
     {
 
-        //ConcDao d = new ConcDao();
-
         int index=0;
         int nextindex=0;
         int chunk = paralength;
+        String paragraph="";
+        ConcDao dao= new ConcDao();
 
         while (index<dictionary.size())
         {
             StringBuilder sb = new StringBuilder();
-            String paragraph="";
+            
             if (dictionary.size()-chunk<paralength)
             {
                 chunk=dictionary.size();
@@ -160,13 +176,15 @@ public class Dictionary
             {
                 sb.append(dictionary.get(index)).append(" ");
             }
-            paragraph=sb.toString();
-            Paragraph p = new Paragraph(paragraph);
-            //d.insertPara(p);
+            paragraph=sb.toString();  
             nextindex=index;
             chunk+=paralength;
+            paragraphs.add(paragraph);
+           
+            
 
         }
+        
     }
     
     private String getLeftContext(int index, int noofwords)
@@ -212,15 +230,12 @@ public class Dictionary
 
     }
 
-    // private String getParagraph (String word, int index, int noofwords)
-    // {
-    // String paragraphleft = getLeftContext(index, noofwords);
-    // String paragraphright = getRightContext (index, noofwords);
-    // String paragraph = paragraphleft + " " + word + " " + paragraphright;
-
-    // return paragraph;
-    // }
-
+   public void intoDB()
+   {
+       ConcDao dao = new ConcDao();
+       dao.insertCon(concordances);
+    }
+   
     public void printConc()
     {
 
