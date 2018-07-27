@@ -15,7 +15,7 @@ public class ImportPDF
     public static void main (String [] args) throws IOException
     {
         System.setProperty("sun.java2d.cmm", "sun.java2d.cmm.kcms.KcmsServiceProvider");
-        File file = new File(("C://users//Mitsos//Desktop//Suffix arrays.pdf")); 
+        File file = new File(("C:\\Users\\Mitsos\\Documents\\Diss\\Diss books\\Java\\Algorithhms 4th Edition by Robert Sedgewick, Kevin Wayne.pdf")); 
         PDDocument document = null;
         try
         {

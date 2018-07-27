@@ -30,7 +30,7 @@ public class Dictionary
     public static void main(String[] args) throws FileNotFoundException, IOException, Exception
     {
         long startTime = System.nanoTime();
-        //outFile=new PrintWriter("C://users//Mitsos//Desktop//Bibleconc.txt");
+        outFile=new PrintWriter("C://users//Mitsos//Desktop//Bibleconc.txt");
         Dictionary myDictionary=new Dictionary();
         //myDictionary.tokenizeFile();
         //myDictionary.generateConcordance(3);
